@@ -55,7 +55,12 @@ public class SpectatorListener implements Listener {
         if (plugin.getDataManager().isDead(e.getPlayer())
                 && plugin.getConfig().getString("punishment-mode").equalsIgnoreCase("spectator")) {
             if (e.getPlayer().getSpectatorTarget() == null && e.getPlayer().getGameMode() == GameMode.SPECTATOR) {
-                if (!e.getPlayer().getOpenInventory().getTitle().contains("Spectator")) {
+                String rawTitle = plugin.getConfigManager().getMsg("gui-spectator-title");
+                String titlePrefix = rawTitle.contains("{PAGE}") ? rawTitle.substring(0, rawTitle.indexOf("{PAGE}"))
+                        : rawTitle;
+
+                if (!e.getPlayer().getOpenInventory().getTitle().startsWith(titlePrefix)
+                        && !e.getPlayer().getOpenInventory().getTitle().contains("Spectator")) {
                     plugin.getPunishmentManager().openSpectatorGUI(e.getPlayer());
                 }
             }
@@ -68,41 +73,47 @@ public class SpectatorListener implements Listener {
             return;
         Player player = (Player) event.getWhoClicked();
 
-        if (plugin.getDataManager().isDead(player)
-                && plugin.getConfig().getString("punishment-mode").equalsIgnoreCase("spectator")) {
+        String rawTitle = plugin.getConfigManager().getMsg("gui-spectator-title");
+        String titlePrefix = rawTitle.contains("{PAGE}") ? rawTitle.substring(0, rawTitle.indexOf("{PAGE}")) : rawTitle;
+
+        if (event.getView().getTitle().startsWith(titlePrefix) || event.getView().getTitle().contains("Spectator")) {
             event.setCancelled(true);
 
-            if (event.getView().getTitle().contains("Spectator")) {
-                if (event.getCurrentItem() != null && event.getCurrentItem().getType() == Material.PLAYER_HEAD) {
-                    SkullMeta meta = (SkullMeta) event.getCurrentItem().getItemMeta();
-                    if (meta != null && meta.getOwningPlayer() != null && meta.getOwningPlayer().isOnline()) {
-                        Player target = meta.getOwningPlayer().getPlayer();
-                        if (target != null) {
-                            player.closeInventory();
-                            player.teleport(target);
-                            player.sendMessage(plugin.getConfigManager().getMsg("gui-spectator-teleport")
-                                    .replace("{PLAYER}", target.getName()));
-                            player.setGameMode(GameMode.SPECTATOR);
-                            player.setSpectatorTarget(target);
-                        }
-                    }
-                } else if (event.getCurrentItem() != null && event.getCurrentItem().getType() == Material.ARROW) {
-                    String name = event.getCurrentItem().getItemMeta().getDisplayName();
-                    String title = event.getView().getTitle();
-                    int page = 1;
-                    try {
-                        String numStr = title.replaceAll("[^0-9]", "");
-                        if (!numStr.isEmpty()) {
-                            page = Integer.parseInt(numStr);
-                        }
-                    } catch (Exception ignored) {
-                    }
+            if (!plugin.getDataManager().isDead(player)
+                    || !plugin.getConfig().getString("punishment-mode").equalsIgnoreCase("spectator")) {
+                player.closeInventory();
+                return;
+            }
 
-                    if (name.equals(plugin.getConfigManager().getMsg("gui-spectator-next"))) {
-                        plugin.getPunishmentManager().openSpectatorGUI(player, page + 1);
-                    } else if (name.equals(plugin.getConfigManager().getMsg("gui-spectator-prev"))) {
-                        plugin.getPunishmentManager().openSpectatorGUI(player, page - 1);
+            if (event.getCurrentItem() != null && event.getCurrentItem().getType() == Material.PLAYER_HEAD) {
+                SkullMeta meta = (SkullMeta) event.getCurrentItem().getItemMeta();
+                if (meta != null && meta.getOwningPlayer() != null && meta.getOwningPlayer().isOnline()) {
+                    Player target = meta.getOwningPlayer().getPlayer();
+                    if (target != null) {
+                        player.closeInventory();
+                        player.teleport(target);
+                        player.sendMessage(plugin.getConfigManager().getMsg("gui-spectator-teleport")
+                                .replace("{PLAYER}", target.getName()));
+                        player.setGameMode(GameMode.SPECTATOR);
+                        player.setSpectatorTarget(target);
                     }
+                }
+            } else if (event.getCurrentItem() != null && event.getCurrentItem().getType() == Material.ARROW) {
+                String name = event.getCurrentItem().getItemMeta().getDisplayName();
+                String title = event.getView().getTitle();
+                int page = 1;
+                try {
+                    String numStr = title.replaceAll("[^0-9]", "");
+                    if (!numStr.isEmpty()) {
+                        page = Integer.parseInt(numStr);
+                    }
+                } catch (Exception ignored) {
+                }
+
+                if (name.equals(plugin.getConfigManager().getMsg("gui-spectator-next"))) {
+                    plugin.getPunishmentManager().openSpectatorGUI(player, page + 1);
+                } else if (name.equals(plugin.getConfigManager().getMsg("gui-spectator-prev"))) {
+                    plugin.getPunishmentManager().openSpectatorGUI(player, page - 1);
                 }
             }
         }
