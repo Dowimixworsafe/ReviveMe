@@ -24,6 +24,12 @@ public class GhostListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
         Entity target = event.getRightClicked();
+
+        if (target instanceof org.bukkit.entity.Interaction) {
+            plugin.getTombstoneManager().tryLootGrave(event.getPlayer(), (org.bukkit.entity.Interaction) target);
+            return;
+        }
+
         if (target instanceof Player && plugin.getDataManager().isDead((Player) target)) {
             event.setCancelled(true);
         }

@@ -29,6 +29,14 @@ public class DeathListener implements Listener {
         plugin.getDataManager().getData().set("deaths." + uuid, deaths);
         plugin.getDataManager().getData().set("status." + uuid, "dead");
 
+        if (plugin.getConfig().getBoolean("graves-enabled", true)) {
+            plugin.getTombstoneManager().createGrave(player);
+            event.getDrops().clear();
+        }
+
+        event.setKeepLevel(true);
+        event.setDroppedExp(0);
+
         long minutes = plugin.getConfig().getInt("ban-duration-minutes", 180);
         long durationMillis = minutes * 60 * 1000L;
         plugin.getDataManager().getData().set("reviveTime." + uuid, System.currentTimeMillis() + durationMillis);

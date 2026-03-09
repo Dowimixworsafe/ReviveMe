@@ -24,8 +24,9 @@ public class SpectatorListener implements Listener {
     @EventHandler
     public void onSpectatorInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
-        if (plugin.getDataManager().isDead(player) && plugin.getConfig().getString("punishment-mode").equalsIgnoreCase("spectator")) {
-            if (event.getItem() != null && event.getItem().getType() == Material.COMPASS) {
+        if (plugin.getDataManager().isDead(player)
+                && plugin.getConfig().getString("punishment-mode").equalsIgnoreCase("spectator")) {
+            if (event.getAction().name().contains("RIGHT") || event.getAction().name().contains("LEFT")) {
                 plugin.getPunishmentManager().openSpectatorGUI(player);
             }
             event.setCancelled(true);
@@ -34,7 +35,8 @@ public class SpectatorListener implements Listener {
 
     @EventHandler
     public void onSneak(PlayerToggleSneakEvent e) {
-        if (plugin.getDataManager().isDead(e.getPlayer()) && plugin.getConfig().getString("punishment-mode").equalsIgnoreCase("spectator")) {
+        if (plugin.getDataManager().isDead(e.getPlayer())
+                && plugin.getConfig().getString("punishment-mode").equalsIgnoreCase("spectator")) {
             if (e.isSneaking()) {
                 new BukkitRunnable() {
                     @Override
@@ -50,7 +52,8 @@ public class SpectatorListener implements Listener {
 
     @EventHandler
     public void onMove(PlayerMoveEvent e) {
-        if (plugin.getDataManager().isDead(e.getPlayer()) && plugin.getConfig().getString("punishment-mode").equalsIgnoreCase("spectator")) {
+        if (plugin.getDataManager().isDead(e.getPlayer())
+                && plugin.getConfig().getString("punishment-mode").equalsIgnoreCase("spectator")) {
             if (e.getPlayer().getSpectatorTarget() == null && e.getPlayer().getGameMode() == GameMode.SPECTATOR) {
                 if (!e.getPlayer().getOpenInventory().getTitle().contains("Spectator")) {
                     plugin.getPunishmentManager().openSpectatorGUI(e.getPlayer());
@@ -60,23 +63,45 @@ public class SpectatorListener implements Listener {
     }
 
     @EventHandler
-    public void onInventoryClickSpectator(InventoryClickEvent e) {
-        if (!(e.getWhoClicked() instanceof Player)) return;
-        Player player = (Player) e.getWhoClicked();
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player))
+            return;
+        Player player = (Player) event.getWhoClicked();
 
-        if (plugin.getDataManager().isDead(player)) {
-            e.setCancelled(true);
-            if (e.getView().getTitle().contains("Spectator: Wybierz gracza")) {
-                if (e.getCurrentItem() != null && e.getCurrentItem().getType() == Material.PLAYER_HEAD) {
-                    SkullMeta meta = (SkullMeta) e.getCurrentItem().getItemMeta();
-                    if (meta.getOwningPlayer() != null) {
+        if (plugin.getDataManager().isDead(player)
+                && plugin.getConfig().getString("punishment-mode").equalsIgnoreCase("spectator")) {
+            event.setCancelled(true);
+
+            if (event.getView().getTitle().contains("Spectator")) {
+                if (event.getCurrentItem() != null && event.getCurrentItem().getType() == Material.PLAYER_HEAD) {
+                    SkullMeta meta = (SkullMeta) event.getCurrentItem().getItemMeta();
+                    if (meta != null && meta.getOwningPlayer() != null && meta.getOwningPlayer().isOnline()) {
                         Player target = meta.getOwningPlayer().getPlayer();
-                        if (target != null && target.isOnline()) {
+                        if (target != null) {
                             player.closeInventory();
                             player.teleport(target);
+                            player.sendMessage(plugin.getConfigManager().getMsg("gui-spectator-teleport")
+                                    .replace("{PLAYER}", target.getName()));
                             player.setGameMode(GameMode.SPECTATOR);
                             player.setSpectatorTarget(target);
                         }
+                    }
+                } else if (event.getCurrentItem() != null && event.getCurrentItem().getType() == Material.ARROW) {
+                    String name = event.getCurrentItem().getItemMeta().getDisplayName();
+                    String title = event.getView().getTitle();
+                    int page = 1;
+                    try {
+                        String numStr = title.replaceAll("[^0-9]", "");
+                        if (!numStr.isEmpty()) {
+                            page = Integer.parseInt(numStr);
+                        }
+                    } catch (Exception ignored) {
+                    }
+
+                    if (name.equals(plugin.getConfigManager().getMsg("gui-spectator-next"))) {
+                        plugin.getPunishmentManager().openSpectatorGUI(player, page + 1);
+                    } else if (name.equals(plugin.getConfigManager().getMsg("gui-spectator-prev"))) {
+                        plugin.getPunishmentManager().openSpectatorGUI(player, page - 1);
                     }
                 }
             }

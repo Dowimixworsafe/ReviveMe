@@ -80,17 +80,14 @@ public class PunishmentManager {
         ghostManager.removeGhostEntity(player);
 
         if (!alivePlayers.isEmpty()) {
-            player.setSpectatorTarget(alivePlayers.get(0));
+            Player target = alivePlayers.get(0);
+            player.teleport(target);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                player.setSpectatorTarget(target);
+            }, 5L);
         }
 
-        ItemStack comp = new ItemStack(Material.COMPASS);
-        ItemMeta meta = comp.getItemMeta();
-        meta.setDisplayName(ChatColor.GREEN + "Menu Spectatora (Prawy PM)");
-        comp.setItemMeta(meta);
-        player.getInventory().setItem(0, comp);
-        player.getInventory().setItem(8, comp);
-
-        openSpectatorGUI(player);
+        openSpectatorGUI(player, 1);
     }
 
     public void enableGhostMode(Player player) {
@@ -105,6 +102,10 @@ public class PunishmentManager {
     }
 
     public void openSpectatorGUI(Player player) {
+        openSpectatorGUI(player, 1);
+    }
+
+    public void openSpectatorGUI(Player player, int page) {
         List<Player> alivePlayers = Bukkit.getOnlinePlayers().stream()
                 .filter(p -> !dataManager.isDead(p) && p != player)
                 .collect(Collectors.toList());
@@ -112,23 +113,44 @@ public class PunishmentManager {
         if (alivePlayers.isEmpty())
             return;
 
-        int size = (int) Math.ceil(alivePlayers.size() / 9.0) * 9;
-        if (size > 54)
-            size = 54;
-        if (size == 0)
-            size = 9;
+        int totalPages = (int) Math.ceil((double) alivePlayers.size() / 45);
+        if (page < 1)
+            page = 1;
+        if (page > totalPages)
+            page = totalPages;
 
-        org.bukkit.inventory.Inventory gui = Bukkit.createInventory(null, size,
-                ChatColor.DARK_BLUE + "Spectator: Wybierz gracza");
+        org.bukkit.inventory.Inventory gui = Bukkit.createInventory(null, 54,
+                configManager.getMsg("gui-spectator-title").replace("{PAGE}", String.valueOf(page)));
 
-        for (Player target : alivePlayers) {
+        int startIndex = (page - 1) * 45;
+        int endIndex = Math.min(startIndex + 45, alivePlayers.size());
+
+        for (int i = startIndex; i < endIndex; i++) {
+            Player target = alivePlayers.get(i);
             ItemStack head = new ItemStack(Material.PLAYER_HEAD);
             SkullMeta meta = (SkullMeta) head.getItemMeta();
             meta.setOwningPlayer(target);
             meta.setDisplayName(ChatColor.YELLOW + target.getName());
             head.setItemMeta(meta);
-            gui.addItem(head);
+            gui.setItem(i - startIndex, head);
         }
+
+        if (page > 1) {
+            ItemStack prev = new ItemStack(Material.ARROW);
+            ItemMeta meta = prev.getItemMeta();
+            meta.setDisplayName(configManager.getMsg("gui-spectator-prev"));
+            prev.setItemMeta(meta);
+            gui.setItem(45, prev);
+        }
+
+        if (page < totalPages) {
+            ItemStack next = new ItemStack(Material.ARROW);
+            ItemMeta meta = next.getItemMeta();
+            meta.setDisplayName(configManager.getMsg("gui-spectator-next"));
+            next.setItemMeta(meta);
+            gui.setItem(53, next);
+        }
+
         player.openInventory(gui);
     }
 

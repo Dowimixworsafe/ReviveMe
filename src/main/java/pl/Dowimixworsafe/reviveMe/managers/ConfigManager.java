@@ -26,7 +26,7 @@ public class ConfigManager {
             plugin.saveResource("messages_en.yml", false);
         }
 
-        String lang = plugin.getConfig().getString("language", "pl");
+        String lang = plugin.getConfig().getString("language", "en");
         String fileName = "messages_" + lang + ".yml";
 
         messagesFile = new File(plugin.getDataFolder(), fileName);
@@ -41,11 +41,25 @@ public class ConfigManager {
         }
 
         messagesConfig = YamlConfiguration.loadConfiguration(messagesFile);
+
+        java.io.InputStream defConfigStream = plugin.getResource(fileName);
+        if (defConfigStream != null) {
+            YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(
+                    new java.io.InputStreamReader(defConfigStream, java.nio.charset.StandardCharsets.UTF_8));
+            messagesConfig.setDefaults(defConfig);
+            messagesConfig.options().copyDefaults(true);
+            try {
+                messagesConfig.save(messagesFile);
+            } catch (java.io.IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public String getMsg(String path) {
         String msg = messagesConfig.getString(path);
-        if (msg == null) return ChatColor.RED + "Missing message: " + path;
+        if (msg == null)
+            return ChatColor.RED + "Missing message: " + path;
         return ChatColor.translateAlternateColorCodes('&', msg);
     }
 

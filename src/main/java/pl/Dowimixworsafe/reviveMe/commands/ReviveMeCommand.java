@@ -22,7 +22,8 @@ public class ReviveMeCommand implements CommandExecutor {
     private final RevivalManager revivalManager;
     private final PunishmentManager punishmentManager;
 
-    public ReviveMeCommand(ReviveMe plugin, ConfigManager configManager, DataManager dataManager, RevivalManager revivalManager, PunishmentManager punishmentManager) {
+    public ReviveMeCommand(ReviveMe plugin, ConfigManager configManager, DataManager dataManager,
+            RevivalManager revivalManager, PunishmentManager punishmentManager) {
         this.plugin = plugin;
         this.configManager = configManager;
         this.dataManager = dataManager;
@@ -39,15 +40,28 @@ public class ReviveMeCommand implements CommandExecutor {
 
         if (args.length == 0) {
             sender.sendMessage(ChatColor.YELLOW + "--- ReviveMe Admin ---");
-            sender.sendMessage(ChatColor.GOLD + "/reviveme <nick>" + ChatColor.GRAY + " - " + configManager.getMsg("cmd-help-revive"));
-            sender.sendMessage(ChatColor.GOLD + "/reviveme reload" + ChatColor.GRAY + " - " + configManager.getMsg("cmd-help-reload"));
-            sender.sendMessage(ChatColor.GOLD + "/reviveme set mode <ghost/ban/spectator>");
-            sender.sendMessage(ChatColor.GOLD + "/reviveme set time <min>");
-            sender.sendMessage(ChatColor.GOLD + "/reviveme set mob <TYPE>");
-            sender.sendMessage(ChatColor.GOLD + "/reviveme set fly <true/false>");
-            sender.sendMessage(ChatColor.GOLD + "/reviveme set glow <true/false>");
-            sender.sendMessage(ChatColor.GOLD + "/reviveme set haunt <true/false>");
-            sender.sendMessage(ChatColor.GOLD + "/reviveme set haunt-delay <seconds>");
+            sender.sendMessage(ChatColor.GOLD + "/reviveme <nick>" + ChatColor.GRAY + " - "
+                    + configManager.getMsg("cmd-help-revive"));
+            sender.sendMessage(ChatColor.GOLD + "/reviveme reload" + ChatColor.GRAY + " - "
+                    + configManager.getMsg("cmd-help-reload"));
+            sender.sendMessage(ChatColor.GOLD + "/reviveme set lang <pl/en>" + ChatColor.GRAY + " - "
+                    + configManager.getMsg("cmd-help-lang"));
+            sender.sendMessage(ChatColor.GOLD + "/reviveme set mode <ghost/ban/spectator>" + ChatColor.GRAY + " - "
+                    + configManager.getMsg("cmd-help-mode"));
+            sender.sendMessage(ChatColor.GOLD + "/reviveme set time <min>" + ChatColor.GRAY + " - "
+                    + configManager.getMsg("cmd-help-time"));
+            sender.sendMessage(ChatColor.GOLD + "/reviveme set mob <TYPE>" + ChatColor.GRAY + " - "
+                    + configManager.getMsg("cmd-help-mob"));
+            sender.sendMessage(ChatColor.GOLD + "/reviveme set fly <true/false>" + ChatColor.GRAY + " - "
+                    + configManager.getMsg("cmd-help-fly"));
+            sender.sendMessage(ChatColor.GOLD + "/reviveme set glow <true/false>" + ChatColor.GRAY + " - "
+                    + configManager.getMsg("cmd-help-glow"));
+            sender.sendMessage(ChatColor.GOLD + "/reviveme set haunt <true/false>" + ChatColor.GRAY + " - "
+                    + configManager.getMsg("cmd-help-haunt"));
+            sender.sendMessage(ChatColor.GOLD + "/reviveme set haunt-delay <seconds>" + ChatColor.GRAY + " - "
+                    + configManager.getMsg("cmd-help-haunt-delay"));
+            sender.sendMessage(ChatColor.GOLD + "/reviveme set graves <true/false>" + ChatColor.GRAY + " - "
+                    + configManager.getMsg("cmd-help-graves"));
             return true;
         }
 
@@ -61,7 +75,7 @@ public class ReviveMeCommand implements CommandExecutor {
 
         if (args[0].equalsIgnoreCase("set")) {
             if (args.length < 3) {
-                sender.sendMessage(ChatColor.RED + "Uzycie: /reviveme set <opcja> <wartosc>");
+                sender.sendMessage(configManager.getMsg("cmd-usage-set"));
                 return true;
             }
             String option = args[1].toLowerCase();
@@ -71,18 +85,19 @@ public class ReviveMeCommand implements CommandExecutor {
                 plugin.getConfig().set("language", value);
                 plugin.saveConfig();
                 configManager.reload();
-                sender.sendMessage(ChatColor.GREEN + "Language changed to: " + value);
+                sender.sendMessage(configManager.getMsg("lang-changed").replace("{LANG}", value));
                 return true;
             }
 
             if (option.equals("mode")) {
-                if (value.equalsIgnoreCase("ghost") || value.equalsIgnoreCase("ban") || value.equalsIgnoreCase("spectator")) {
+                if (value.equalsIgnoreCase("ghost") || value.equalsIgnoreCase("ban")
+                        || value.equalsIgnoreCase("spectator")) {
                     plugin.getConfig().set("punishment-mode", value.toLowerCase());
                     plugin.saveConfig();
                     sender.sendMessage(configManager.getMsg("mode-changed").replace("{MODE}", value.toUpperCase()));
                     refreshGhosts();
                 } else {
-                    sender.sendMessage(ChatColor.RED + "Modes: ghost, ban, spectator");
+                    sender.sendMessage(configManager.getMsg("mode-invalid"));
                 }
                 return true;
             }
@@ -94,7 +109,7 @@ public class ReviveMeCommand implements CommandExecutor {
                     plugin.saveConfig();
                     sender.sendMessage(configManager.getMsg("time-changed").replace("{TIME}", String.valueOf(minutes)));
                 } catch (NumberFormatException e) {
-                    sender.sendMessage(ChatColor.RED + "Error: Invalid number.");
+                    sender.sendMessage(configManager.getMsg("time-invalid"));
                 }
                 return true;
             }
@@ -104,10 +119,10 @@ public class ReviveMeCommand implements CommandExecutor {
                     EntityType type = EntityType.valueOf(value.toUpperCase());
                     plugin.getConfig().set("ghost-mob-type", type.name());
                     plugin.saveConfig();
-                    sender.sendMessage(ChatColor.GREEN + "Ghost mob changed to: " + type.name());
+                    sender.sendMessage(configManager.getMsg("mob-changed").replace("{MOB}", type.name()));
                     refreshGhosts();
                 } catch (IllegalArgumentException e) {
-                    sender.sendMessage(ChatColor.RED + "Invalid mob type! Use e.g. ALLAY, VEX, PARROT.");
+                    sender.sendMessage(configManager.getMsg("mob-invalid"));
                 }
                 return true;
             }
@@ -116,7 +131,7 @@ public class ReviveMeCommand implements CommandExecutor {
                 boolean fly = Boolean.parseBoolean(value);
                 plugin.getConfig().set("ghost-fly", fly);
                 plugin.saveConfig();
-                sender.sendMessage(ChatColor.GREEN + "Ghost fly set to: " + fly);
+                sender.sendMessage(configManager.getMsg("fly-changed").replace("{STATE}", String.valueOf(fly)));
                 return true;
             }
 
@@ -124,7 +139,7 @@ public class ReviveMeCommand implements CommandExecutor {
                 boolean glow = Boolean.parseBoolean(value);
                 plugin.getConfig().set("ghost-glowing", glow);
                 plugin.saveConfig();
-                sender.sendMessage(ChatColor.GREEN + "Ghost glowing set to: " + glow);
+                sender.sendMessage(configManager.getMsg("glow-changed").replace("{STATE}", String.valueOf(glow)));
                 refreshGhosts();
                 return true;
             }
@@ -133,7 +148,7 @@ public class ReviveMeCommand implements CommandExecutor {
                 boolean haunt = Boolean.parseBoolean(value);
                 plugin.getConfig().set("ghost-haunt-enabled", haunt);
                 plugin.saveConfig();
-                sender.sendMessage(ChatColor.GREEN + "Ghost haunting set to: " + haunt);
+                sender.sendMessage(configManager.getMsg("haunt-set").replace("{STATE}", String.valueOf(haunt)));
                 refreshGhosts();
                 return true;
             }
@@ -143,10 +158,19 @@ public class ReviveMeCommand implements CommandExecutor {
                     int seconds = Integer.parseInt(value);
                     plugin.getConfig().set("ghost-haunt-cooldown", seconds);
                     plugin.saveConfig();
-                    sender.sendMessage(ChatColor.GREEN + "Haunt delay set to: " + seconds + "s");
+                    sender.sendMessage(
+                            configManager.getMsg("haunt-delay-changed").replace("{TIME}", String.valueOf(seconds)));
                 } catch (NumberFormatException e) {
-                    sender.sendMessage(ChatColor.RED + "Invalid number.");
+                    sender.sendMessage(configManager.getMsg("time-invalid"));
                 }
+                return true;
+            }
+
+            if (option.equals("graves")) {
+                boolean graves = Boolean.parseBoolean(value);
+                plugin.getConfig().set("graves-enabled", graves);
+                plugin.saveConfig();
+                sender.sendMessage(configManager.getMsg("graves-changed").replace("{STATE}", String.valueOf(graves)));
                 return true;
             }
         }
@@ -154,14 +178,15 @@ public class ReviveMeCommand implements CommandExecutor {
         UUID targetUUID = findUUID(args[0]);
 
         if (targetUUID == null) {
-            sender.sendMessage(ChatColor.RED + "Gracz nieznany.");
+            sender.sendMessage(configManager.getMsg("player-unknown"));
             return true;
         }
 
         OfflinePlayer target = Bukkit.getOfflinePlayer(targetUUID);
 
         if (dataManager.isDead(targetUUID)) {
-            Location loc = (sender instanceof Player) ? ((Player) sender).getLocation() : Bukkit.getWorlds().get(0).getSpawnLocation();
+            Location loc = (sender instanceof Player) ? ((Player) sender).getLocation()
+                    : Bukkit.getWorlds().get(0).getSpawnLocation();
             revivalManager.revivePlayer(target, loc);
             sender.sendMessage(configManager.getMsg("admin-revive-success").replace("{PLAYER}", target.getName()));
         } else {
@@ -181,13 +206,15 @@ public class ReviveMeCommand implements CommandExecutor {
 
     private UUID findUUID(String name) {
         Player p = Bukkit.getPlayer(name);
-        if (p != null) return p.getUniqueId();
+        if (p != null)
+            return p.getUniqueId();
         try {
             OfflinePlayer op = Bukkit.getOfflinePlayer(name);
             if (op.hasPlayedBefore() || op.getUniqueId() != null) {
                 return op.getUniqueId();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         return null;
     }
 }
