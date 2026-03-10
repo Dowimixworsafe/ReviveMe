@@ -9,7 +9,7 @@
     <version>1.0</version>
     <packaging>jar</packaging>
 
-    <name>reviveritual</name>
+    <name>ReviveRitual</name>
 
     <properties>
         <java.version>21</java.version>

@@ -35,8 +35,8 @@ public class ConfigManager {
             if (plugin.getResource(fileName) != null) {
                 plugin.saveResource(fileName, false);
             } else {
-                plugin.getLogger().warning("Language file " + fileName + " not found! Using PL default.");
-                messagesFile = new File(plugin.getDataFolder(), "messages_pl.yml");
+                plugin.getLogger().warning("Language file " + fileName + " not found! Using EN default.");
+                messagesFile = new File(plugin.getDataFolder(), "messages_en.yml");
             }
         }
 
