@@ -34,7 +34,7 @@ ghost-glow: true
 ghost-haunt-enabled: true
 
 # Cooldown time (in seconds) between ghost haunting abilities.
-ghost-haunt-delay: 15
+ghost-haunt-delay: 45
 
 # ---------------------------
 # Grave Settings
