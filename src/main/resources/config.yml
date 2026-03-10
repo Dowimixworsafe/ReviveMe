@@ -1,0 +1,45 @@
+# ReviveMe Configuration File
+# ---------------------------
+
+# General Settings
+# Language of the plugin's messages. Available: 'en', 'pl'
+language: "en"
+
+# Defines what happens when a player dies
+# Available modes:
+# - ghost: Player becomes an invisible spirit accompanied by a mob, with limited interactions.
+# - spectator: Player enters Minecraft's built-in spectator mode and a teleport GUI opens.
+# - ban: Player is temporarily banned from the server upon death.
+punishment-mode: "ghost"
+
+# Determines how long the punishment lasts before an automatic revive or unban
+# Time in minutes.
+punishment-time-minutes: 180
+
+# ---------------------------
+# Ghost Settings
+# ---------------------------
+
+# The mob that accompanies the ghost player. Only applies in 'ghost' mode.
+# Can be any valid Bukkit EntityType name, e.g., "ALLAY", "VEX", "BAT", "PARROT"
+ghost-mob: "ALLAY"
+
+# Should ghosts be allowed to fly? (True/False)
+ghost-fly: true
+
+# Should the ghost's accompanying mob have a glowing outline? (True/False)
+ghost-glow: true
+
+# Should ghosts be able to use the haunting item to scare alive players? (True/False)
+ghost-haunt-enabled: true
+
+# Cooldown time (in seconds) between ghost haunting abilities.
+ghost-haunt-delay: 15
+
+# ---------------------------
+# Grave Settings
+# ---------------------------
+
+# Should a grave be automatically generated when a player dies to store their items and experience?
+# If false, items and experience will drop naturally.
+graves-enabled: true
