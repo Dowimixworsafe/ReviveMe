@@ -30,14 +30,22 @@ public class DeathListener implements Listener {
         plugin.getDataManager().getData().set("status." + uuid, "dead");
 
         if (plugin.getConfig().getBoolean("graves-enabled", true)) {
-            plugin.getTombstoneManager().createGrave(player);
+            org.bukkit.Location graveLoc = plugin.getTombstoneManager().createGrave(player);
             event.getDrops().clear();
+
+            if (plugin.getConfig().getBoolean("grave-show-coordinates", true)) {
+                String msg = plugin.getConfigManager().getMsg("grave-coordinates")
+                        .replace("{X}", String.valueOf(graveLoc.getBlockX()))
+                        .replace("{Y}", String.valueOf(graveLoc.getBlockY()))
+                        .replace("{Z}", String.valueOf(graveLoc.getBlockZ()));
+                player.sendMessage(msg);
+            }
         }
 
         event.setKeepLevel(true);
         event.setDroppedExp(0);
 
-        long minutes = plugin.getConfig().getInt("ban-duration-minutes", 180);
+        long minutes = plugin.getConfig().getInt("punishment-time-minutes", 180);
         long durationMillis = minutes * 60 * 1000L;
         plugin.getDataManager().getData().set("reviveTime." + uuid, System.currentTimeMillis() + durationMillis);
         plugin.getDataManager().saveData();

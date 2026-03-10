@@ -7,14 +7,20 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.util.StringUtil;
 import pl.Dowimixworsafe.reviveRitual.ReviveRitual;
 import pl.Dowimixworsafe.reviveRitual.managers.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-public class ReviveRitualCommand implements CommandExecutor {
+public class ReviveRitualCommand implements CommandExecutor, TabCompleter {
 
     private final ReviveRitual plugin;
     private final ConfigManager configManager;
@@ -39,7 +45,7 @@ public class ReviveRitualCommand implements CommandExecutor {
         }
 
         if (args.length == 0) {
-            sender.sendMessage(ChatColor.YELLOW + "--- ReviveRitual Admin ---");
+            sender.sendMessage(configManager.getMsg("cmd-help-header"));
             sender.sendMessage(ChatColor.GOLD + "/rr <nick>" + ChatColor.GRAY + " - "
                     + configManager.getMsg("cmd-help-revive"));
             sender.sendMessage(ChatColor.GOLD + "/rr reload" + ChatColor.GRAY + " - "
@@ -62,6 +68,12 @@ public class ReviveRitualCommand implements CommandExecutor {
                     + configManager.getMsg("cmd-help-haunt-delay"));
             sender.sendMessage(ChatColor.GOLD + "/rr set graves <true/false>" + ChatColor.GRAY + " - "
                     + configManager.getMsg("cmd-help-graves"));
+            sender.sendMessage(ChatColor.GOLD + "/rr set grave-coords <true/false>" + ChatColor.GRAY + " - "
+                    + configManager.getMsg("cmd-help-grave-coords"));
+            sender.sendMessage(ChatColor.GOLD + "/rr set cross-loot <true/false>" + ChatColor.GRAY + " - "
+                    + configManager.getMsg("cmd-help-cross-loot"));
+            sender.sendMessage(ChatColor.GOLD + "/rr cleargraves <all|nick|radius>" + ChatColor.GRAY + " - "
+                    + configManager.getMsg("cmd-help-cleargraves"));
             return true;
         }
 
@@ -105,7 +117,7 @@ public class ReviveRitualCommand implements CommandExecutor {
             if (option.equals("time")) {
                 try {
                     int minutes = Integer.parseInt(value);
-                    plugin.getConfig().set("ban-duration-minutes", minutes);
+                    plugin.getConfig().set("punishment-time-minutes", minutes);
                     plugin.saveConfig();
                     sender.sendMessage(configManager.getMsg("time-changed").replace("{TIME}", String.valueOf(minutes)));
                 } catch (NumberFormatException e) {
@@ -173,6 +185,92 @@ public class ReviveRitualCommand implements CommandExecutor {
                 sender.sendMessage(configManager.getMsg("graves-changed").replace("{STATE}", String.valueOf(graves)));
                 return true;
             }
+
+            if (option.equals("grave-coords")) {
+                boolean coords = Boolean.parseBoolean(value);
+                plugin.getConfig().set("grave-show-coordinates", coords);
+                plugin.saveConfig();
+                sender.sendMessage(
+                        configManager.getMsg("grave-coords-changed").replace("{STATE}", String.valueOf(coords)));
+                return true;
+            }
+
+            if (option.equals("cross-loot")) {
+                boolean cross = Boolean.parseBoolean(value);
+                plugin.getConfig().set("grave-cross-loot", cross);
+                plugin.saveConfig();
+                sender.sendMessage(configManager.getMsg("cross-loot-changed").replace("{STATE}", String.valueOf(cross)));
+                return true;
+            }
+        }
+
+        if (args[0].equalsIgnoreCase("cleargraves")) {
+            if (args.length < 2) {
+                sender.sendMessage(configManager.getMsg("cleargraves-usage"));
+                return true;
+            }
+            String arg = args[1];
+
+            if (arg.equalsIgnoreCase("all")) {
+                int count = 0;
+                for (org.bukkit.World world : Bukkit.getWorlds()) {
+                    for (org.bukkit.entity.Entity e : world.getEntities()) {
+                        for (String tag : e.getScoreboardTags()) {
+                            if (tag.startsWith("grave_")) {
+                                e.remove();
+                                count++;
+                                break;
+                            }
+                        }
+                    }
+                }
+                sender.sendMessage(configManager.getMsg("cleargraves-all").replace("{COUNT}", String.valueOf(count)));
+                return true;
+            }
+
+            UUID clearTarget = findUUID(arg);
+            if (clearTarget != null) {
+                String prefix = "grave_" + clearTarget.toString();
+                int count = 0;
+                for (org.bukkit.World world : Bukkit.getWorlds()) {
+                    for (org.bukkit.entity.Entity e : world.getEntities()) {
+                        for (String tag : e.getScoreboardTags()) {
+                            if (tag.startsWith(prefix)) {
+                                e.remove();
+                                count++;
+                                break;
+                            }
+                        }
+                    }
+                }
+                sender.sendMessage(configManager.getMsg("cleargraves-player").replace("{COUNT}", String.valueOf(count))
+                        .replace("{PLAYER}", arg));
+                return true;
+            }
+
+            if (sender instanceof Player) {
+                try {
+                    int radius = Integer.parseInt(arg);
+                    Player p = (Player) sender;
+                    int count = 0;
+                    for (org.bukkit.entity.Entity e : p.getNearbyEntities(radius, radius, radius)) {
+                        for (String tag : e.getScoreboardTags()) {
+                            if (tag.startsWith("grave_")) {
+                                e.remove();
+                                count++;
+                                break;
+                            }
+                        }
+                    }
+                    sender.sendMessage(configManager.getMsg("cleargraves-radius")
+                            .replace("{COUNT}", String.valueOf(count)).replace("{RADIUS}", String.valueOf(radius)));
+                } catch (NumberFormatException e) {
+                    sender.sendMessage(configManager.getMsg("cleargraves-invalid").replace("{ARG}", arg));
+                }
+            } else {
+                sender.sendMessage(configManager.getMsg("cleargraves-console"));
+            }
+            return true;
         }
 
         UUID targetUUID = findUUID(args[0]);
@@ -216,5 +314,65 @@ public class ReviveRitualCommand implements CommandExecutor {
         } catch (Exception ignored) {
         }
         return null;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!sender.isOp())
+            return List.of();
+
+        List<String> completions = new ArrayList<>();
+
+        if (args.length == 1) {
+            List<String> options = new ArrayList<>(Arrays.asList("reload", "set", "cleargraves"));
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                options.add(p.getName());
+            }
+            StringUtil.copyPartialMatches(args[0], options, completions);
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("set")) {
+            List<String> options = Arrays.asList(
+                    "lang", "mode", "time", "mob", "fly", "glow",
+                    "haunt", "haunt-delay", "graves", "grave-coords", "cross-loo);
+            StringUtil.copyPartialMatches(args[1], options, completions);
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("cleargraves")) {
+            List<String> options = new ArrayList<>(Arrays.asList("all", "10", "25", "50", "100"));
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                options.add(p.getName());
+            }
+            StringUtil.copyPartialMatches(args[1], options, completions);
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("set")) {
+            String option = args[1].toLowerCase();
+            switch (option) {
+                case "lang":
+                    StringUtil.copyPartialMatches(args[2], Arrays.asList("pl", "en"), completions);
+                    break;
+                case "mode":
+                    StringUtil.copyPartialMatches(args[2], Arrays.asList("ghost", "ban", "spectator"), completions);
+                    break;
+                case "fly":
+                case "glow":
+                case "haunt":
+                case "graves":
+                case "grave-coords"
+                 case "cross-loot":
+                    StringUtil.copyPartialMatches(args[2], Arrays.asList("true", "false"), completions);
+                    break;
+                case "mob":
+                    List<String> mobs = Arrays.stream(EntityType.values())
+                            .filter(EntityType::isAlive)
+                            .map(e -> e.name().toLowerCase())
+                            .collect(Collectors.toList());
+                    StringUtil.copyPartialMatches(args[2], mobs, completions);
+                    break;
+                case "time":
+                    completions.addAll(Arrays.asList("1", "5", "10", "30", "60"));
+                    break;
+                case "haunt-delay":
+                    completions.addAll(Arrays.asList("15", "30", "45", "60", "120"));
+                    break;
+            }
+        }
+
+        return completions;
     }
 }

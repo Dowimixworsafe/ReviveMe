@@ -24,26 +24,89 @@ public class RevivalManager {
     }
 
     public void revivePlayer(OfflinePlayer target, Location respawnLoc) {
-        dataManager.getData().set("status." + target.getUniqueId(), "alive");
-        dataManager.getData().set("reviveTime." + target.getUniqueId(), null);
-        dataManager.saveData();
-
         if (target.isOnline()) {
             Player p = target.getPlayer();
             if (p != null) {
-                p.teleport(respawnLoc);
-                p.sendMessage(configManager.getMsg("revive-success"));
-                p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
-
-                p.setGameMode(GameMode.SURVIVAL);
-                p.removePotionEffect(org.bukkit.potion.PotionEffectType.INVISIBILITY);
-                p.setAllowFlight(false);
-                p.setFlying(false);
-                p.getInventory().clear();
-
-                plugin.getPunishmentManager().removeGhostAttributes(p);
+                playReviveAnimation(p, target, respawnLoc);
             }
         }
+    }
+
+    private void playReviveAnimation(Player player, OfflinePlayer target, Location respawnLoc) {
+        Location loc = respawnLoc.clone();
+        org.bukkit.World world = loc.getWorld();
+
+        world.playSound(loc, Sound.ENTITY_WITHER_SPAWN, 0.7f, 0.5f);
+        new org.bukkit.scheduler.BukkitRunnable() {
+            int ticks = 0;
+
+            @Override
+            public void run() {
+                if (ticks >= 40) {
+                    cancel();
+                    return;
+                }
+                double angle = ticks * 0.3;
+                double radius = 1.5 - (ticks * 0.02);
+                double x = Math.cos(angle) * radius;
+                double z = Math.sin(angle) * radius;
+                double y = ticks * 0.05;
+                world.spawnParticle(Particle.SOUL_FIRE_FLAME, loc.clone().add(x, y, z), 2, 0.05, 0.05, 0.05, 0.01);
+                world.spawnParticle(Particle.SOUL_FIRE_FLAME, loc.clone().add(-x, y, -z), 2, 0.05, 0.05, 0.05, 0.01);
+
+                if (ticks % 5 == 0) {
+                    world.spawnParticle(Particle.LARGE_SMOKE, loc.clone().add(0, 0.1, 0), 8, 0.5, 0.1, 0.5, 0.02);
+                }
+
+                ticks++;
+            }
+        }.runTaskTimer(plugin, 0L, 1L);
+
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            dataManager.getData().set("status." + target.getUniqueId(), "alive");
+            dataManager.getData().set("reviveTime." + target.getUniqueId(), null);
+            dataManager.saveData();
+
+            plugin.getPunishmentManager().removeGhostAttributes(player);
+            player.teleport(respawnLoc);
+            player.setGameMode(GameMode.SURVIVAL);
+            player.removePotionEffect(org.bukkit.potion.PotionEffectType.INVISIBILITY);
+            player.setAllowFlight(false);
+            player.setFlying(false);
+            player.getInventory().clear();
+            player.sendMessage(configManager.getMsg("revive-success"));
+
+            world.strikeLightningEffect(respawnLoc);
+
+            world.spawnParticle(Particle.TOTEM_OF_UNDYING, respawnLoc.clone().add(0, 1, 0), 100, 0.5, 1.0, 0.5, 0.5);
+
+            world.playSound(respawnLoc, Sound.ITEM_TOTEM_USE, 1f, 1f);
+        }, 40L);
+
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            new org.bukkit.scheduler.BukkitRunnable() {
+                int ticks = 0;
+
+                @Override
+                public void run() {
+                    if (ticks >= 20) {
+                        cancel();
+                        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1.5f);
+                        return;
+                    }
+                    Location pLoc = player.getLocation().add(0, 1, 0);
+                    for (int i = 0; i < 8; i++) {
+                        double angle = (ticks * 0.4) + (i * Math.PI / 4);
+                        double radius = 0.5 + (ticks * 0.1);
+                        double x = Math.cos(angle) * radius;
+                        double z = Math.sin(angle) * radius;
+                        world.spawnParticle(Particle.END_ROD, pLoc.clone().add(x, 0, z), 1, 0, 0.1, 0, 0.02);
+                    }
+
+                    ticks++;
+                }
+            }.runTaskTimer(plugin, 0L, 1L);
+        }, 50L);
     }
 
     public void spawnBloodLiquid(Block cauldron, String targetName) {
@@ -61,7 +124,8 @@ public class RevivalManager {
 
     public void cleanUpCauldron(Block block) {
         if (block.getType() == Material.CAULDRON || block.getType() == Material.WATER_CAULDRON) {
-            Collection<Entity> entities = block.getWorld().getNearbyEntities(block.getLocation().add(0.5, 0.5, 0.5), 1.0, 1.0, 1.0);
+            Collection<Entity> entities = block.getWorld().getNearbyEntities(block.getLocation().add(0.5, 0.5, 0.5),
+                    1.0, 1.0, 1.0);
             for (Entity e : entities) {
                 if (e.getScoreboardTags().contains(BLOOD_TAG)) {
                     e.remove();

@@ -43,3 +43,10 @@ ghost-haunt-delay: 45
 # Should a grave be automatically generated when a player dies to store their items and experience?
 # If false, items and experience will drop naturally.
 graves-enabled: true
+
+# Should the player receive a chat message with grave coordinates upon death?
+grave-show-coordinates: true
+
+# Should players be allowed to loot graves of other players?
+# Default: false (only grave owner can loot their own grave)
+grave-cross-loot: false

@@ -130,14 +130,22 @@ public class GhostManager {
         Entity ghost = player.getWorld().spawnEntity(player.getLocation(), type);
 
         if (ghost instanceof LivingEntity) {
-            ((LivingEntity) ghost).setAI(false);
-            ((LivingEntity) ghost).setCollidable(false);
+            LivingEntity living = (LivingEntity) ghost;
+            living.setAI(false);
+            living.setCollidable(false);
+
+            org.bukkit.attribute.AttributeInstance scaleAttr = living.getAttribute(org.bukkit.attribute.Attribute.SCALE);
+            if (scaleAttr != null) {
+                scaleAttr.setBaseValue(0.5);
+            }
         }
 
         ghost.setInvulnerable(true);
         ghost.setSilent(true);
         ghost.setFireTicks(0);
         ghost.setVisualFire(false);
+        ghost.setGravity(false);
+        ghost.setPersistent(false);
 
         ghost.setGlowing(plugin.getConfig().getBoolean("ghost-glowing", true));
 
