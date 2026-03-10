@@ -28,7 +28,7 @@ public final class ReviveRitual extends JavaPlugin {
         this.revivalManager = new RevivalManager(this, dataManager, configManager);
         this.punishmentManager = new PunishmentManager(this, configManager, dataManager, ghostManager);
 
-        getCommand("reviveme")
+        getCommand("rr")
                 .setExecutor(new ReviveRitualCommand(this, configManager, dataManager, revivalManager, punishmentManager));
 
         getServer().getPluginManager().registerEvents(new GhostListener(this), this);

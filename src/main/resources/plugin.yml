@@ -7,6 +7,6 @@ commands:
     description: Manages the revival system.
     usage: /rr <nick> | set <lang/mode/time/mob/fly/glow/tag/haunt/haunt-delay> | reload
 permissions:
-  reviveme.admin:
+  reviveritual.admin:
     description: Allows access to administrator commands.
     default: op
