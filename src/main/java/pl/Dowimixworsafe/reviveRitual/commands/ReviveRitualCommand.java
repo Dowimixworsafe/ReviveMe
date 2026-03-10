@@ -332,7 +332,8 @@ public class ReviveRitualCommand implements CommandExecutor, TabCompleter {
         } else if (args.length == 2 && args[0].equalsIgnoreCase("set")) {
             List<String> options = Arrays.asList(
                     "lang", "mode", "time", "mob", "fly", "glow",
-                    "haunt", "haunt-delay", "graves", "grave-coords", "cross-loo);
+                    "haunt", "haunt-delay", "graves", "grave-coords", "cross-loot"
+            );
             StringUtil.copyPartialMatches(args[1], options, completions);
         } else if (args.length == 2 && args[0].equalsIgnoreCase("cleargraves")) {
             List<String> options = new ArrayList<>(Arrays.asList("all", "10", "25", "50", "100"));
@@ -353,8 +354,8 @@ public class ReviveRitualCommand implements CommandExecutor, TabCompleter {
                 case "glow":
                 case "haunt":
                 case "graves":
-                case "grave-coords"
-                 case "cross-loot":
+                case "grave-coords":
+                case "cross-loot":
                     StringUtil.copyPartialMatches(args[2], Arrays.asList("true", "false"), completions);
                     break;
                 case "mob":
