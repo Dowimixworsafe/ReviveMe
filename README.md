@@ -23,20 +23,20 @@
 ## Features
 
 ### Grave System
-- Beautiful **3D graves** built from Display Entities (BlockDisplay, ItemDisplay, TextDisplay)
+- Beautiful **3D graves** built from Display Entities
 - Player's **skull** mounted on top of the tombstone
 - **R.I.P.** text, player name, and death date carved into stone
 - Stores the player's **entire inventory** and **XP** — recoverable upon interaction
-- Optional **cross-player looting** (disabled by default)
+- Optional **cross-player looting**
 - **Coordinate notification** sent to the player upon death
 - Admin command to **clear graves** by player, radius, or all at once
 
 ### Ghost Mode
 - Dead players become **invisible spirits** that can fly and roam the world
-- A configurable **companion mob** follows the ghost (default: Allay) with optional **glowing outline**
+- A configurable **companion mob** follows the ghost with optional **glowing outline**
 - Ghosts **cannot** interact with the world — no block breaking/placing, no item pickup/drop, no combat
 - Mobs ignore ghosts entirely
-- **Haunting ability** — ghosts can scare living players with a spooky sound effect (configurable cooldown)
+- **Haunting ability** — ghosts can scare living players with a spooky sound effect
 - Action bar **countdown timer** showing remaining punishment time
 
 ### Spectator Mode
@@ -52,7 +52,7 @@
 ### Revival Ritual
 A dramatic, multi-step cauldron ritual to bring the dead back:
 
-1. **Rename** a Potion of Strong Healing to the dead player's name (using an Anvil)
+1. **Rename** a Potion of Strong Healing to the dead player's name
 2. **Pour** the potion into a Cauldron — it accepts the "blood sacrifice" and fills with a crimson liquid
 3. **Use** a Totem of Undying on the blood-filled cauldron
 4. **Lightning strikes**, and the player is resurrected with a server-wide broadcast!
